@@ -1,3 +1,12 @@
+# ultralytics_for_rknn
+
+modified head for rknn from onnx, refer to [rknn_model_zoo](https://github.com/airockchip/rknn_model_zoo). tested:
+- [ ] yolov8
+- [ ] yolo11
+- [ ] yoloe
+
+### The following is the original readme
+
 <div align="center">
   <p>
     <a href="https://www.ultralytics.com/events/yolovision?utm_source=github&utm_medium=org&utm_campaign=yv25_event" target="_blank">
