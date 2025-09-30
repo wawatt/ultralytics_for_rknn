@@ -1,6 +1,6 @@
 # ultralytics_for_rknn
 
-modified head for rknn from onnx, refer to [rknn_model_zoo](https://github.com/airockchip/rknn_model_zoo). tested:
+modified head for rknn from onnx, refer to [rknn_model_zoo](https://github.com/airockchip/rknn_model_zoo). TODO:
 - [ ] yolov8
 - [ ] yolo11
 - [ ] yoloe
