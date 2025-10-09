@@ -47,7 +47,7 @@ class Conv(nn.Module):
         default_act (nn.Module): Default activation function (SiLU).
     """
 
-    default_act = nn.SiLU()  # default activation
+    default_act = nn.HardSwish() #replace SiLU with HardSwish for rknnv2.3.2   # default activation
 
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
         """
@@ -240,7 +240,7 @@ class ConvTranspose(nn.Module):
         default_act (nn.Module): Default activation function (SiLU).
     """
 
-    default_act = nn.SiLU()  # default activation
+    default_act = nn.HardSwish() #replace SiLU with HardSwish for rknnv2.3.2   # default activation
 
     def __init__(self, c1, c2, k=2, s=2, p=0, bn=True, act=True):
         """
@@ -390,7 +390,7 @@ class RepConv(nn.Module):
         https://github.com/DingXiaoH/RepVGG/blob/main/repvgg.py
     """
 
-    default_act = nn.SiLU()  # default activation
+    default_act = nn.HardSwish() #replace SiLU with HardSwish for rknnv2.3.2   # default activation
 
     def __init__(self, c1, c2, k=3, s=1, p=1, g=1, d=1, act=True, bn=False, deploy=False):
         """
