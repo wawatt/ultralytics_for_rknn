@@ -1,9 +1,9 @@
-
-from ultralytics.models.yolo.yoloe import YOLOESegTrainerFromScratch
 from ultralytics import YOLOE
+from ultralytics.models.yolo.yoloe import YOLOESegTrainerFromScratch
+
 data = dict(
     train=dict(
-        yolo_data=["Objects365.yaml"],
+        yolo_data=["./Objects365v1.yaml"],
         grounding_data=[
             dict(
                 img_path="flickr/full_images/",
@@ -18,14 +18,14 @@ data = dict(
     val=dict(yolo_data=["lvis.yaml"]),
 )
 
-model = YOLOE("yoloe-11s-seg.yaml")
+model = YOLOE("yoloe-11n-seg.yaml")
 model.train(
     data=data,
-    batch=128,
+    batch=32,
     epochs=30,
     close_mosaic=2,
     optimizer="AdamW",
-    lr0=2e-3,
+    lr0=5e-4,
     warmup_bias_lr=0.0,
     weight_decay=0.025,
     momentum=0.9,
