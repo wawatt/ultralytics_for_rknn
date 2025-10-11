@@ -1,10 +1,9 @@
 # ultralytics_for_rknn
 
 modified head for rknn(v2.3.2) from onnx, refer to [rknn_model_zoo](https://github.com/airockchip/rknn_model_zoo). TODO:
-- [ ] replace silu with hardswish
-- [x] test yolov8
-- [x] test yolo11
-- [x] test yoloe
+- [x] test yolov8 det seg
+- [x] test yolo11 det seg
+- [x] test yoloe det seg
 
 ### The following is the original readme
 
