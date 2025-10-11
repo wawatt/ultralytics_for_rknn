@@ -20,6 +20,7 @@ MNN                     | `mnn`                     | yolo11n.mnn
 NCNN                    | `ncnn`                    | yolo11n_ncnn_model/
 IMX                     | `imx`                     | yolo11n_imx_model/
 RKNN                    | `rknn`                    | yolo11n_rknn_model/
+RKONNX                  | `rkonnx`                  | yolo11n.onnx
 
 Requirements:
     $ pip install "ultralytics[export]"
@@ -48,6 +49,7 @@ Inference:
                          yolo11n_ncnn_model         # NCNN
                          yolo11n_imx_model          # IMX
                          yolo11n_rknn_model         # RKNN
+                         yolo11n.onnx               # RKONNX
 
 TensorFlow.js:
     $ cd .. && git clone https://github.com/zldrobit/tfjs-yolov5-example.git && cd tfjs-yolov5-example
@@ -148,6 +150,7 @@ def export_formats():
         ["NCNN", "ncnn", "_ncnn_model", True, True, ["batch", "half"]],
         ["IMX", "imx", "_imx_model", True, True, ["int8", "fraction", "nms"]],
         ["RKNN", "rknn", "_rknn_model", False, False, ["batch", "name"]],
+        ["RKONNX", "rkonnx", ".onnx", False, False, ["batch", "dynamic", "opset", "simplify"]],
     ]
     return dict(zip(["Format", "Argument", "Suffix", "CPU", "GPU", "Arguments"], zip(*x)))
 
@@ -322,7 +325,7 @@ class Exporter:
         flags = [x == fmt for x in fmts]
         if sum(flags) != 1:
             raise ValueError(f"Invalid export format='{fmt}'. Valid formats are {fmts}")
-        (jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, paddle, mnn, ncnn, imx, rknn) = (
+        (jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, paddle, mnn, ncnn, imx, rknn, rkonnx) = (
             flags  # export booleans
         )
 
@@ -541,6 +544,8 @@ class Exporter:
             f[13] = self.export_imx()
         if rknn:
             f[14] = self.export_rknn()
+        if rkonnx:
+            f[15] = self.export_rkonnx()
 
         # Finish
         f = [str(x) for x in f if x]  # filter out '' and None
@@ -1212,6 +1217,12 @@ class Exporter:
         YAML.save(export_path / "metadata.yaml", self.metadata)
         return export_path
 
+    @try_export
+    def export_rkonnx(self, prefix=colorstr("RKONNX:")):
+        """Export YOLO model to ONNX format for RKNN."""
+        LOGGER.info(f"\n{prefix} starting export onnx for rknn...")
+        return self.export_onnx()
+    
     @try_export
     def export_imx(self, prefix=colorstr("IMX:")):
         """Export YOLO model to IMX format."""

@@ -95,6 +95,7 @@ class AutoBackend(nn.Module):
             | NCNN                  | *_ncnn_model/     |
             | IMX                   | *_imx_model/      |
             | RKNN                  | *_rknn_model/     |
+            | RKONNX                | *.onnx            |
 
     Attributes:
         model (torch.nn.Module): The loaded YOLO model.
@@ -175,6 +176,7 @@ class AutoBackend(nn.Module):
             ncnn,
             imx,
             rknn,
+            rkonnx,
             triton,
         ) = self._model_type("" if nn_module else model)
         fp16 &= pt or jit or onnx or xml or engine or nn_module or triton  # FP16

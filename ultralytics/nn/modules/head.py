@@ -121,7 +121,7 @@ class Detect(nn.Module):
                 y.append(torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1))
             return y
 
-        if self.export and self.format == 'onnx':
+        if self.export and self.format == 'rkonnx':
             y = []
             for i in range(self.nl):
                 y.append(self.cv2[i](x[i]))
@@ -292,7 +292,7 @@ class Segment(Detect):
         p = self.proto(x[0])  # mask protos
         bs = p.shape[0]  # batch size
 
-        if self.export and self.format == 'onnx':
+        if self.export and self.format == 'rkonnx':
             mc = [self.cv4[i](x[i]) for i in range(self.nl)]
         else:
             mc = torch.cat([self.cv4[i](x[i]).view(bs, self.nm, -1) for i in range(self.nl)], 2)  # mask coefficients
@@ -301,7 +301,7 @@ class Segment(Detect):
         if self.training:
             return x, mc, p
 
-        if self.export and self.format == 'onnx':
+        if self.export and self.format == 'rkonnx':
             bo = len(x)//3
             relocated = []
             for i in range(len(mc)):
@@ -355,7 +355,7 @@ class OBB(Detect):
         bs = x[0].shape[0]  # batch size
         angle = torch.cat([self.cv4[i](x[i]).view(bs, self.ne, -1) for i in range(self.nl)], 2)  # OBB theta logits
 
-        if self.export and self.format == 'onnx':
+        if self.export and self.format == 'rkonnx':
             x = Detect.forward(self, x, "Obb")
             return [x, angle.sigmoid()]
 
@@ -416,7 +416,7 @@ class Pose(Detect):
         """Perform forward pass through YOLO model and return predictions."""
         bs = x[0].shape[0]  # batch size
         kpt = torch.cat([self.cv4[i](x[i]).view(bs, self.nk, -1) for i in range(self.nl)], -1)  # (bs, 17*3, h*w)
-        if self.export and self.format == 'onnx':
+        if self.export and self.format == 'rkonnx':
             output_x = Detect.forward(self, x, 'Pose')
             y = []
             y.append(output_x)
@@ -454,7 +454,7 @@ class Pose(Detect):
                 a = (y[:, :, :2] * 2.0 + (self.anchors - 0.5)) * self.strides
             if ndim == 3:
                 a = torch.cat((a, y[:, :, 2:3].sigmoid()), 2)
-            if self.export and self.format == 'onnx':
+            if self.export and self.format == 'rkonnx':
                 return a
             return a.view(bs, self.nk, -1)
         else:
@@ -564,7 +564,7 @@ class WorldDetect(Detect):
 
     def forward(self, x: list[torch.Tensor], text: torch.Tensor) -> list[torch.Tensor] | tuple:
         """Concatenate and return predicted bounding boxes and class probabilities."""
-        if self.export and self.format == 'onnx':
+        if self.export and self.format == 'rkonnx':
             y = []
             for i in range(self.nl):
                 y.append(self.cv2[i](x[i]))
@@ -828,7 +828,7 @@ class YOLOEDetect(Detect):
         if hasattr(self, "lrpc"):  # for prompt-free inference
             return self.forward_lrpc(x, return_mask)
 
-        if self.export and self.format == 'onnx':
+        if self.export and self.format == 'rkonnx':
             y = []
             for i in range(self.nl):
                 y.append(self.cv2[i](x[i]))
@@ -911,7 +911,7 @@ class YOLOESegment(YOLOEDetect):
         p = self.proto(x[0])  # mask protos
         bs = p.shape[0]  # batch size
 
-        if self.export and self.format == 'onnx':
+        if self.export and self.format == 'rkonnx':
             mc = [self.cv5[i](x[i]) for i in range(self.nl)]
         else:
             mc = torch.cat([self.cv5[i](x[i]).view(bs, self.nm, -1) for i in range(self.nl)], 2)  # mask coefficients
@@ -925,7 +925,7 @@ class YOLOESegment(YOLOEDetect):
         if self.training:
             return x, mc, p
 
-        if self.export and self.format == 'onnx':
+        if self.export and self.format == 'rkonnx':
             bo = len(x)//3
             relocated = []
             for i in range(len(mc)):

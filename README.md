@@ -2,9 +2,9 @@
 
 modified head for rknn(v2.3.2) from onnx, refer to [rknn_model_zoo](https://github.com/airockchip/rknn_model_zoo). TODO:
 - [ ] replace silu with hardswish
-- [ ] test yolov8
-- [ ] test yolo11
-- [ ] test yoloe
+- [x] test yolov8
+- [x] test yolo11
+- [x] test yoloe
 
 ### The following is the original readme
 
