@@ -3,6 +3,7 @@
   "flags": {},
   "shapes": [
     {
+      "kie_linking": [],
       "label": "0",
       "score": null,
       "points": [
@@ -28,12 +29,12 @@
       "difficult": false,
       "shape_type": "rectangle",
       "flags": {},
-      "attributes": {},
-      "kie_linking": []
+      "attributes": {}
     }
   ],
   "imagePath": "20190926104735866.jpg",
   "imageData": null,
   "imageHeight": 800,
-  "imageWidth": 800
+  "imageWidth": 800,
+  "description": ""
 }

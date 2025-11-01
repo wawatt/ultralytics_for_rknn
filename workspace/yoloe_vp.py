@@ -23,7 +23,7 @@ def get_anno(labelme_json_path):
     with open(labelme_json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
-    labels = []
+    labels_str = []
     bboxes = []
 
     # 图像文件路径：json文件中的imagePath字段，拼接json的文件夹路径获得完整路径
@@ -43,11 +43,15 @@ def get_anno(labelme_json_path):
         y_min, y_max = min(ys), max(ys)
         
         bboxes.append([x_min, y_min, x_max, y_max])
-        labels.append(int(0))
-    if len(labels)==0:
+        labels_str.append(label)
+    if len(labels_str)==0:
         return None, None, image_path
+    
+    label_mapping = {label: idx for idx, label in enumerate(sorted(set(labels_str)))}
+    labels_int = [label_mapping[label] for label in labels_str]
+    labels = np.array(labels_int, dtype=np.int32)
+
     bboxes = np.array(bboxes, dtype=np.float32)
-    labels = np.array(labels, dtype=np.int32)
 
 
     return bboxes, labels, image_path
