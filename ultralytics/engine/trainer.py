@@ -276,7 +276,8 @@ class BaseTrainer:
             if isinstance(self.args.freeze, int)
             else []
         )
-        always_freeze_names = [".dfl"]  # always freeze these layers
+        # Always freeze DFL layers and DINO model layers (DINO weights should remain frozen during training)
+        always_freeze_names = [".dfl", ".dino_model"]
         freeze_layer_names = [f"model.{x}." for x in freeze_list] + always_freeze_names
         self.freeze_layer_names = freeze_layer_names
         for k, v in self.model.named_parameters():

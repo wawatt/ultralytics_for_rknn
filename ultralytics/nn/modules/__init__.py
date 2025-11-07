@@ -59,6 +59,8 @@ from .block import (
     ResNetLayer,
     SCDown,
     TorchVision,
+    DINO3Backbone,
+    DINO3Preprocessor,
 )
 from .conv import (
     CBAM,
@@ -179,4 +181,6 @@ __all__ = (
     "YOLOEDetect",
     "YOLOESegment",
     "v10Detect",
+    "DINO3Backbone",
+    "DINO3Preprocessor"
 )

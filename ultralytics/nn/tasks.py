@@ -68,6 +68,8 @@ from ultralytics.nn.modules import (
     YOLOEDetect,
     YOLOESegment,
     v10Detect,
+    DINO3Backbone,
+    DINO3Preprocessor,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, YAML, colorstr, emojis
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -1696,6 +1698,11 @@ def parse_model(d, ch, verbose=True):
             args = [c1, c2, *args[1:]]
         elif m is CBFuse:
             c2 = ch[f[-1]]
+        elif m in {DINO3Preprocessor, DINO3Backbone}:
+            # DINO modules: maintain input channels, args format: [model_name, freeze_backbone, output_channels]
+            c1 = ch[f] 
+            c2 = args[2] if len(args) > 2 else ch[f]  # output channels specified in args, default to input
+            args = [*args]  # keep original args format for DINO modules
         elif m in frozenset({TorchVision, Index}):
             c2 = args[0]
             c1 = ch[f]
