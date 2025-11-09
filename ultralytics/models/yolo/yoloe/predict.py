@@ -116,7 +116,6 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
             bboxes[..., 1::2] += round((dst_shape[0] - src_shape[0] * gain) / 2 - 0.1)
         elif masks is not None:
             # Resize and process masks
-            print("--------------------",masks.shape)
             resized_masks = super().pre_transform(masks)
             masks = np.squeeze(np.stack(resized_masks), axis=-1)  # (N, H, W)
             masks[masks == 114] = 0  # Reset padding values to 0
