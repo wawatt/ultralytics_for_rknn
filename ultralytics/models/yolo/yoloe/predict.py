@@ -121,8 +121,9 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
             bboxes[..., 1::2] += round((dst_shape[0] - src_shape[0] * gain) / 2 - 0.1)
         elif masks is not None:
             # Resize and process masks
+            print("--------------------",masks.shape)
             resized_masks = super().pre_transform(masks)
-            masks = np.stack(resized_masks)  # (N, H, W)
+            masks = np.squeeze(np.stack(resized_masks), axis=-1)  # (N, H, W)
             masks[masks == 114] = 0  # Reset padding values to 0
         else:
             raise ValueError("Please provide valid bboxes or masks")
@@ -156,6 +157,7 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
         Returns:
             (torch.Tensor): The visual prompt embeddings (VPE) from the model.
         """
+        key_anno = "masks" if self.__class__ == YOLOEVPSegPredictor and self.prompts.get("masks") is not None else "bboxes"
         self.setup_source(source)
         for _, im0s, _ in self.dataset:
             if len(im0s) > 1:  # multiple refer_image
@@ -163,7 +165,7 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
                 prompts = self.prompts  # original prompts
                 vpes = []
                 for i, im in enumerate(im0s):
-                    self.prompts = {k: prompts[k][i] for k in ["bboxes", "cls"]}  # extract prompt for current image
+                    self.prompts = {k: prompts[k][i] for k in [key_anno, "cls"]}  # extract prompt for current image
                     im = self.preprocess([im])
                     vpes += [self.model(im, vpe=self.prompts, return_vpe=True)]
                 vpe_stack = []  # vpe for each class processed separately

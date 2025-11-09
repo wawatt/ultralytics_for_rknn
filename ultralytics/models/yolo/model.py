@@ -399,18 +399,18 @@ class YOLOE(Model):
             >>> results = model.predict("path/to/image.jpg", visual_prompts=prompts)
         """
         if len(visual_prompts):
-            assert "bboxes" in visual_prompts and "cls" in visual_prompts, (
-                f"Expected 'bboxes' and 'cls' in visual prompts, but got {visual_prompts.keys()}"
-            )
-            if isinstance(refer_image, list):  # multiple reference images
-                assert len(visual_prompts["bboxes"]) == len(visual_prompts["cls"]) == len(refer_image), (
-                    "Expected number of prompts to be equal to number of reference images."
-                )
-            else:
-                assert len(visual_prompts["bboxes"]) == len(visual_prompts["cls"]), (
-                    f"Expected equal number of bounding boxes and classes, but got {len(visual_prompts['bboxes'])} and "
-                    f"{len(visual_prompts['cls'])} respectively"
-                )
+            # assert "bboxes" in visual_prompts and "cls" in visual_prompts, (
+            #     f"Expected 'bboxes' and 'cls' in visual prompts, but got {visual_prompts.keys()}"
+            # )
+            # if isinstance(refer_image, list):  # multiple reference images
+            #     assert len(visual_prompts["bboxes"]) == len(visual_prompts["cls"]) == len(refer_image), (
+            #         "Expected number of prompts to be equal to number of reference images."
+            #     )
+            # else:
+            #     assert len(visual_prompts["bboxes"]) == len(visual_prompts["cls"]), (
+            #         f"Expected equal number of bounding boxes and classes, but got {len(visual_prompts['bboxes'])} and "
+            #         f"{len(visual_prompts['cls'])} respectively"
+            #     )
             if type(self.predictor) is not predictor:
                 self.predictor = predictor(
                     overrides={

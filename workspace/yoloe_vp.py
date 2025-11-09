@@ -7,54 +7,19 @@ import os
 from ultralytics import YOLOE
 from ultralytics.models.yolo.yoloe import YOLOEVPSegPredictor, YOLOEVPDetectPredictor
 
-def get_anno(labelme_json_path):
+def get_circle_points_range(center, radius, start_angle=0, end_angle=2*np.pi, num_points=100):
     """
-    从LabelMe JSON文件中读取边界框坐标、标签类别和图像文件名
-    
-    Args:
-        labelme_json_path (str): LabelMe JSON文件路径
-        
-    Returns:
-        tuple: (bboxes, labels, image_path) 
-               bboxes: 边界框坐标，np.array格式，形状为(N, 4)，格式为[x_min, y_min, x_max, y_max]，数据类型为float32
-               labels: 标签类别列表，格式: ['label1', 'label2', ...]
-               image_path: 图像文件路径
+    获取圆上指定角度范围内的点
     """
-    with open(labelme_json_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    cx, cy = center
     
-    labels_str = []
-    bboxes = []
-
-    # 图像文件路径：json文件中的imagePath字段，拼接json的文件夹路径获得完整路径
-    json_dir = os.path.dirname(labelme_json_path)
-    image_path = os.path.join(json_dir, data.get('imagePath', ''))
+    angles = np.linspace(start_angle, end_angle, num_points)
     
-    for shape in data.get('shapes', []):
-        label = shape.get('label')
-        points = shape.get('points')  # list of [x, y]
-        if not points or len(points) == 0:
-            continue
-        
-        # 计算边界框，找到xmin, ymin, xmax, ymax
-        xs = [point[0] for point in points]
-        ys = [point[1] for point in points]
-        x_min, x_max = min(xs), max(xs)
-        y_min, y_max = min(ys), max(ys)
-        
-        bboxes.append([x_min, y_min, x_max, y_max])
-        labels_str.append(label)
-    if len(labels_str)==0:
-        return None, None, image_path
+    x = cx + radius * np.cos(angles)
+    y = cy + radius * np.sin(angles)
     
-    label_mapping = {label: idx for idx, label in enumerate(sorted(set(labels_str)))}
-    labels_int = [label_mapping[label] for label in labels_str]
-    labels = np.array(labels_int, dtype=np.int32)
-
-    bboxes = np.array(bboxes, dtype=np.float32)
-
-
-    return bboxes, labels, image_path
+    points = np.column_stack((x, y))
+    return points
 
 def get_json_files(dir):
     import os
@@ -95,65 +60,159 @@ class RegisterYOLOE:
             raise ValueError(f"Unsupported format: {format}")
 
 
-    def add_refers(self, refer_images, visual_prompts):
-        if len(visual_prompts["bboxes"]) != len(visual_prompts["cls"]):
-            raise ValueError("The number of bboxes and cls must be equal")
-        if len(visual_prompts["bboxes"]) != len(refer_images):
-            raise ValueError("The number of refer_images and visual_prompts must be equal")
+    def add_refers_to_model(self, refer_images, visual_prompts):
 
-        if len(visual_prompts["bboxes"]) == 1:
+        len_bboxes = len(visual_prompts["bboxes"])
+        len_masks = len(visual_prompts["masks"])
+        key_anno = ""
+        len_anno = 0
+        if len_bboxes > 0:
+            len_anno = len_bboxes
+            key_anno = "bboxes"
+            print("-----------using bboxes")
+        elif len_masks > 0:
+            len_anno = len_masks
+            key_anno = "masks"
+            print("-----------using masks")
+        else:
+            raise ValueError("Please provide valid bboxes or masks")
+
+        if len_anno != len(visual_prompts["cls"]):
+            raise ValueError("The number of anno and cls must be equal")
+        if len_anno != len(refer_images):
+            raise ValueError("The number of anno and refer_images must be equal")
+
+        if len(visual_prompts[key_anno]) == 1:
             print("Only one prompt, using the first prompt for first images")
             visual_prompts_tmp = dict(
-                bboxes=visual_prompts["bboxes"][0],
-                cls=visual_prompts["cls"][0],  
+                cls=visual_prompts["cls"][0]
             )
+            visual_prompts_tmp[key_anno] = visual_prompts[key_anno][0]
             refer_images_tmp = refer_images[0]
         else:
             visual_prompts_tmp = dict(
-                bboxes=visual_prompts["bboxes"],
                 cls=visual_prompts["cls"],  
             )
+            visual_prompts_tmp[key_anno] = visual_prompts[key_anno]
             refer_images_tmp = refer_images
     
         results = self.model.predict(
-            refer_images[0],
+            source=refer_images[0],
             refer_image=refer_images_tmp,
             visual_prompts=visual_prompts_tmp,
             predictor=self.mode,
             imgsz=self.imgsz
         )
+        results[0].show()
+
+    def get_anno(self, labelme_json_path):
+        """
+        从LabelMe JSON文件中读取边界框坐标、标签类别和图像文件名
+        
+        Args:
+            labelme_json_path (str): LabelMe JSON文件路径
+            
+        Returns:
+            tuple: (bboxes, masks, labels, image_path) 
+                bboxes: 边界框坐标，np.array格式，形状为(N, 4)，格式为[x_min, y_min, x_max, y_max]，数据类型为float32
+                masks: 255
+                labels: 标签类别列表，格式: ['label1', 'label2', ...]
+                image_path: 图像文件路径
+        """
+        with open(labelme_json_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        labels_str = []
+        bboxes = []
+        masks = []
+
+        # 图像文件路径：json文件中的imagePath字段，拼接json的文件夹路径获得完整路径
+        json_dir = os.path.dirname(labelme_json_path)
+        image_path = os.path.join(json_dir, data.get('imagePath', ''))
+        img_height = data.get('imageHeight', 0)
+        img_width = data.get('imageWidth', 0)
+
+        for shape in data.get('shapes', []):
+            label = shape.get('label')
+            shape_type = shape.get('shape_type')
+            points = shape.get('points')  # list of [x, y]
+            if not points or len(points) == 0:
+                print(f"Warning: shape {shape_type} with no points, skip")
+                continue
+            if shape_type not in ['polygon', 'rectangle']:
+                print(f"Warning: shape {shape_type} not in ['polygon', 'rectangle'], skip")
+                continue
+
+            if self.mode == YOLOEVPDetectPredictor:
+                # rectangle + YOLOEVPDetectPredictor or polygon + YOLOEVPDetectPredictor
+                # 计算边界框，找到xmin, ymin, xmax, ymax
+                xs = [point[0] for point in points]
+                ys = [point[1] for point in points]
+                x_min, x_max = min(xs), max(xs)
+                y_min, y_max = min(ys), max(ys)
+                print(f"bbox: {[x_min, y_min, x_max, y_max]}")
+                bboxes.append([x_min, y_min, x_max, y_max])
+
+            if shape_type == 'polygon' and self.mode == YOLOEVPSegPredictor:
+                # 创建掩码
+                mask = np.zeros((img_height, img_width), dtype=np.uint8)
+                cv2.fillPoly(mask, [np.array(points, dtype=np.int32)], 255)
+                masks.append(mask)
+
+            labels_str.append(label)
+
+        if len(labels_str)==0:
+            return None, None, None, image_path
+        
+        label_mapping = {label: idx for idx, label in enumerate(sorted(set(labels_str)))}
+        labels_int = [label_mapping[label] for label in labels_str]
+        labels = np.array(labels_int, dtype=np.int32)
+
+        if len(bboxes) != 0:
+            bboxes = np.array(bboxes, dtype=np.float32)
+            masks = None
+        elif len(masks) != 0:
+            bboxes = None
+            masks = np.array(masks, dtype=np.uint8)
+        else:
+            raise ValueError(f"Please provide valid bboxes or masks")
+
+
+        return bboxes, masks, labels, image_path
+    
+    def regist_refers(self, refer_dir="refers"):
+
+        json_files = get_json_files(refer_dir)
+        if len(json_files) == 0:
+            raise ValueError(f"Refer dir {refer_dir} is empty")
+        
+        refer_images = []
+        visual_prompts=dict(
+            cls=[],
+            bboxes=[],
+            masks=[],
+        )
+
+        for json_file in json_files:
+            bboxes, masks, labels, image_path = self.get_anno(json_file)
+            print(bboxes)
+            if labels is not None:
+                print(image_path)
+                
+                refer_images.append(image_path)
+                visual_prompts["cls"].append(labels)
+            if bboxes is not None:
+                visual_prompts["bboxes"].append(bboxes)
+            if masks is not None:
+                visual_prompts["masks"].append(masks)
+
+        self.add_refers_to_model(refer_images, visual_prompts)
 
 
 if __name__ == "__main__":
     model  = RegisterYOLOE(arch='s', imgsz=(640, 640), mode='det')
     # add refers
-    refer_images = []
-    visual_prompts=dict(
-        bboxes=[],
-        cls=[],
-    )
-    json_files = get_json_files("refers")
-    for json_file in json_files:
-        print(json_file)
-        bboxes, labels, image_path = get_anno(json_file)
-        if bboxes is not None and labels is not None:
-            refer_images.append(cv2.imread(image_path))
-            visual_prompts["bboxes"].append(bboxes)
-            visual_prompts["cls"].append(labels)
-   
-    model.add_refers(refer_images, visual_prompts)
-
-    # json_files = get_json_files("assets/scew/h/test")
-    # for json_file in json_files:
-    #     bboxes, labels, image_path = get_anno(json_file)
-    #     # refer_images.append(cv2.imread(image_path))
-    #     # visual_prompts["bboxes"].append(bboxes)
-    #     # visual_prompts["cls"].append(labels)
-
-    #     results = model(image_path)
-    #     results[0].show()
-
-    #     break
+    model.regist_refers(refer_dir="refers/Pokemon")
 
     # 导出使用
     # model.export(format="rknn")
